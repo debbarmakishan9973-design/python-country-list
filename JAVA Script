@@ -1,0 +1,71 @@
+Java script and HTML for chat app
+class ChatApp {
+    constructor(url) {
+        this.url = url;
+        this.socket = null;
+        this.username = "";
+    }
+
+    connect(username) {
+        this.username = username;
+        this.socket = new WebSocket(this.url);
+
+        this.socket.onopen = () => {
+            this.addMessage("Connected to server");
+        };
+
+        this.socket.onmessage = (event) => {
+            this.addMessage(event.data);
+        };
+
+        this.socket.onclose = () => {
+            this.addMessage("Disconnected");
+        };
+
+        this.socket.onerror = (err) => {
+            console.error("WebSocket Error:", err);
+        };
+    }
+
+    sendMessage(message) {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            alert("Not connected!");
+            return;
+        }
+
+        const msg = `${this.username}: ${message}`;
+        this.socket.send(msg);
+    }
+
+    addMessage(message) {
+        const chatBox = document.getElementById("chatBox");
+        const p = document.createElement("p");
+        p.textContent = message;
+        chatBox.appendChild(p);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
+
+// 👇 MAIN CODE
+const app = new ChatApp("wss://echo.websocket.events");
+
+// Join button
+document.getElementById("joinBtn").onclick = () => {
+    const username = document.getElementById("username").value;
+    if (!username) {
+        alert("Enter a username! ");
+        return;
+    }
+    app.connect(username);
+};
+
+// Send button
+document.getElementById("sendBtn").onclick = () => {
+    const msgInput = document.getElementById("messageInput");
+    const message = msgInput.value;
+
+    if (!message) return;
+
+    app.sendMessage(message);
+    msgInput.value = "";
+};
